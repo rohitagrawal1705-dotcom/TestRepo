@@ -30,7 +30,11 @@ public class RequestContextResolver {
 
             if (!securityProperties.getAllowedClientIds()
                     .contains(clientId)) {
-                throw new BadRequestException("Unauthorized APIM client");
+                try {
+                    throw new BadRequestException("Unauthorized APIM client");
+                } catch (BadRequestException e) {
+                    throw new RuntimeException(e);
+                }
             }
 
             return RequestContext.builder()
@@ -41,6 +45,10 @@ public class RequestContextResolver {
                     .build();
         }
 
-        throw new BadRequestException("Invalid headers");
+        try {
+            throw new BadRequestException("Invalid headers");
+        } catch (BadRequestException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
