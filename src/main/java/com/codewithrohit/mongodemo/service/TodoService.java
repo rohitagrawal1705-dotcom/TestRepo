@@ -3,6 +3,7 @@ package com.codewithrohit.mongodemo.service;
 import com.codewithrohit.mongodemo.dtos.request.CreateTodoRequest;
 import com.codewithrohit.mongodemo.dtos.response.TodoDetailResponse;
 import com.codewithrohit.mongodemo.entity.*;
+import com.codewithrohit.mongodemo.exception.ResourceNotFoundException;
 import com.codewithrohit.mongodemo.mapper.TodoMapper;
 import com.codewithrohit.mongodemo.model.UserInfo;
 import com.codewithrohit.mongodemo.repository.TodoRepository;
@@ -53,6 +54,16 @@ public class TodoService {
                 todoRepository.save(entity)
         );
     }
+
+    public TodoDetailResponse getTodoById(String id, RequestContext context) {
+
+        TodoEntity entity = todoRepository
+                .findAuthorizedTodo(id, context.getUserId())
+                .orElseThrow(() -> new ResourceNotFoundException("Todo not found"));
+
+        return todoMapper.toDetailResponse(entity);
+    }
+
 
     private UserInfo buildUserFromContext(RequestContext context) {
         return UserInfo.builder()
