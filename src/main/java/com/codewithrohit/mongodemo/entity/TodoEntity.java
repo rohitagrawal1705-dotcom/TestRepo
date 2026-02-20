@@ -1,6 +1,8 @@
 package com.codewithrohit.mongodemo.entity;
 
 
+import com.codewithrohit.mongodemo.dtos.request.UpdateTodoRequest;
+import com.codewithrohit.mongodemo.exception.ForbiddenException;
 import com.codewithrohit.mongodemo.model.*;
 import com.codewithrohit.mongodemo.security.CallerType;
 import lombok.*;
@@ -148,5 +150,96 @@ public class TodoEntity {
                         .anyMatch(u ->
                                 u.getUserId()
                                         .equals(this.createdBy.getUserId()));
+    }
+
+
+    public void update(UpdateTodoRequest request,
+                       UserInfo modifier,
+                       boolean isCreator) {
+
+        if (!isCreator) {
+            throw new ForbiddenException("Only creator can modify todo");
+        }
+
+        if (request.getTitle() != null)
+            this.title = request.getTitle();
+
+        if (request.getDescription() != null)
+            this.description = request.getDescription();
+
+        if (request.getPriority() != null)
+            this.priority = request.getPriority();
+
+        if (request.getDueDate() != null)
+            this.dueDate = request.getDueDate();
+
+        if (request.getAssociatedEntities() != null)
+            this.associatedEntities = request.getAssociatedEntities();
+
+        if (request.getAssignedToUsers() != null) {
+            assignUsers(request.getAssignedToUsers(), true);
+        }
+
+        if (request.getReminder() != null) {
+            configureReminder(request.getReminder().getRemindAt());
+        }
+
+        markModified(modifier);
+    }
+
+    public void addComment(String comment, UserInfo author) {
+
+        if (!this.createdBy.getUserId().equals(author.getUserId()) &&
+                this.assignees.stream()
+                        .noneMatch(u -> u.getUserId()
+                                .equals(author.getUserId()))) {
+
+            throw new ForbiddenException("Only creator or assignee can comment");
+        }
+
+        this.comments.add(
+                Comments.builder()
+                        .comment(comment)
+                        .commentedBy(author)
+                        .commentedAt(LocalDateTime.now())
+                        .build()
+        );
+
+        markModified(author);
+    }
+
+    public void complete(UserInfo user) {
+
+        boolean isAssigned =
+                this.assignees.stream()
+                        .anyMatch(u -> u.getUserId()
+                                .equals(user.getUserId()));
+
+        if (!isAssigned) {
+            throw new ForbiddenException(
+                    "Only assigned user can complete todo");
+        }
+
+        this.state = State.COMPLETED;
+
+        markModified(user);
+    }
+
+    public void delete(UserInfo user) {
+
+        if (this.state == State.CANCELLED) {
+            throw new BadRequestException("Todo already deleted");
+        }
+
+        if (!this.createdBy.getUserId()
+                .equals(user.getUserId())) {
+
+            throw new ForbiddenException(
+                    "Only creator can delete todo");
+        }
+
+        this.state = State.CANCELLED;
+
+        markModified(user);
     }
 }

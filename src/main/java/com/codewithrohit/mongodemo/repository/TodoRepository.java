@@ -14,11 +14,23 @@ public interface TodoRepository extends MongoRepository<TodoEntity, String> {
     @Query("""
             {
               "_id": ?0,
+              "product": ?1,
               "$or": [
-                { "createdBy.userId": ?1 },
-                { "assignees.userId": ?1 }
+                {"createdBy.userId": ?2},
+                {"assignedToUsers.userId": ?2}
               ]
             }
             """)
-    Optional<TodoEntity> findAuthorizedTodo(String id, String userId);
+    Optional<TodoEntity> findAccessibleTodo(
+            String id,
+            String product,
+            String userId
+    );
+
+
+    Optional<TodoEntity> findByIdAndProductAndClientId(
+            String id,
+            String product,
+            String clientId
+    );
 }

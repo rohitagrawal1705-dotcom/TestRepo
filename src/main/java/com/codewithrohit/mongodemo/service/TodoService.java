@@ -1,6 +1,8 @@
 package com.codewithrohit.mongodemo.service;
 
+import com.codewithrohit.mongodemo.dtos.request.AddCommentRequest;
 import com.codewithrohit.mongodemo.dtos.request.CreateTodoRequest;
+import com.codewithrohit.mongodemo.dtos.request.UpdateTodoRequest;
 import com.codewithrohit.mongodemo.dtos.response.TodoDetailResponse;
 import com.codewithrohit.mongodemo.entity.*;
 import com.codewithrohit.mongodemo.exception.ResourceNotFoundException;
@@ -58,7 +60,7 @@ public class TodoService {
     public TodoDetailResponse getTodoById(String id, RequestContext context) {
 
         TodoEntity entity = todoRepository
-                .findAuthorizedTodo(id, context.getUserId())
+                .findAccessibleTodo(id, context.getProduct(), context.getUserId())
                 .orElseThrow(() -> new ResourceNotFoundException("Todo not found"));
 
         return todoMapper.toDetailResponse(entity);
@@ -72,5 +74,99 @@ public class TodoService {
                 .lastName(context.getLastName())
                 .email(context.getEmail())
                 .build();
+    }
+
+    public TodoDetailResponse update(String id,
+                                     UpdateTodoRequest request,
+                                     RequestContext context) {
+
+        TodoEntity entity = fetchAccessible(id, context);
+
+        UserInfo user = buildUserFromContext(context);
+
+        boolean isCreator =
+                entity.getCreatedBy()
+                        .getUserId()
+                        .equals(user.getUserId());
+
+        entity.update(request, user, isCreator);
+
+        return todoMapper.toDetailResponse(
+                todoRepository.save(entity)
+        );
+    }
+
+    public TodoDetailResponse addComment(String id,
+                                         AddCommentRequest request,
+                                         RequestContext context) {
+
+        TodoEntity entity = fetchAccessible(id, context);
+
+        UserInfo user = buildUserFromContext(context);
+
+        entity.addComment(request.getMessage(), user);
+
+        return todoMapper.toDetailResponse(
+                todoRepository.save(entity)
+        );
+    }
+
+    public TodoDetailResponse complete(String id,
+                                       RequestContext context) {
+
+        TodoEntity entity = fetchAccessible(id, context);
+
+        UserInfo user = buildUserFromContext(context);
+
+        entity.complete(user);
+
+        return todoMapper.toDetailResponse(
+                todoRepository.save(entity)
+        );
+    }
+
+    public void delete(String id,
+                       RequestContext context) {
+
+        TodoEntity entity = fetchAccessible(id, context);
+
+        UserInfo user = buildUserFromContext(context);
+
+        if (context.getCallerType() == CallerType.USER) {
+
+            entity.delete(user);
+
+        } else {
+
+            // SERVICE rule: allow delete only if creator belongs to service
+            entity.delete(user);
+        }
+
+        todoRepository.save(entity);
+    }
+
+    private TodoEntity fetchAccessible(String id,
+                                       RequestContext context) {
+
+        if (context.getCallerType() == CallerType.SERVICE) {
+
+            return todoRepository
+                    .findByIdAndProductAndClientId(
+                            id,
+                            context.getProduct(),
+                            context.getClientId()
+                    )
+                    .orElseThrow(() ->
+                            new ResourceNotFoundException("Todo not found"));
+        }
+
+        return todoRepository
+                .findAccessibleTodo(
+                        id,
+                        context.getProduct(),
+                        context.getUserId()
+                )
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Todo not found"));
     }
 }
