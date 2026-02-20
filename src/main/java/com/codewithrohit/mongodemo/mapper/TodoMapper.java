@@ -1,13 +1,15 @@
 package com.codewithrohit.mongodemo.mapper;
 
-import com.codewithrohit.mongodemo.dtos.request.AssociatedEntitiesRequest;
-import com.codewithrohit.mongodemo.dtos.request.AssociatedEntityIdRequest;
 import com.codewithrohit.mongodemo.dtos.request.CreateTodoRequest;
 import com.codewithrohit.mongodemo.dtos.response.*;
 import com.codewithrohit.mongodemo.entity.*;
+import com.codewithrohit.mongodemo.model.*;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.NullValuePropertyMappingStrategy;
+
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Mapper(
         componentModel = "spring",
@@ -28,17 +30,25 @@ public interface TodoMapper {
     @Mapping(target = "reminder", ignore = true)
     TodoEntity toEntity(CreateTodoRequest request);
 
-    TodoResponse toResponse(TodoEntity entity);
+    /* ========= Response Mapping ========= */
 
-    AssociatedEntities toAssociatedEntities(AssociatedEntitiesRequest request);
+    TodoSummaryResponse toSummaryResponse(TodoEntity entity);
 
-    AssociatedEntityId toAssociatedEntityId(AssociatedEntityIdRequest request);
+    TodoDetailResponse toDetailResponse(TodoEntity entity);
 
-    AssociatedEntitiesResponse toAssociatedEntitiesResponse(AssociatedEntities entity);
+    /* ========= User Mapping ========= */
 
-    AssociatedEntityIdResponse toAssociatedEntityIdResponse(AssociatedEntityId id);
+    default UserSummaryResponse map(UserInfo user) {
+        if (user == null) return null;
+        return UserSummaryResponse.builder()
+                .userId(user.getUserId())
+                .build();
+    }
 
-    CommentResponse toCommentResponse(Comments comment);
-
-    ReminderResponse toReminderResponse(Reminder reminder);
+    default Set<UserSummaryResponse> mapUsers(Set<UserInfo> users) {
+        if (users == null) return Set.of();
+        return users.stream()
+                .map(this::map)
+                .collect(Collectors.toSet());
+    }
 }

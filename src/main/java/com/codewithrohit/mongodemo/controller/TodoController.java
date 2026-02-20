@@ -1,7 +1,7 @@
 package com.codewithrohit.mongodemo.controller;
 
 import com.codewithrohit.mongodemo.dtos.request.CreateTodoRequest;
-import com.codewithrohit.mongodemo.dtos.response.TodoResponse;
+import com.codewithrohit.mongodemo.dtos.response.TodoDetailResponse;
 import com.codewithrohit.mongodemo.security.RequestContext;
 import com.codewithrohit.mongodemo.security.RequestContextResolver;
 import com.codewithrohit.mongodemo.service.TodoService;
@@ -20,7 +20,7 @@ public class TodoController {
     private final RequestContextResolver contextResolver;
 
     @PostMapping
-    public ResponseEntity<TodoResponse> createTodo(
+    public ResponseEntity<TodoDetailResponse> createTodo(
             @Valid @RequestBody CreateTodoRequest request,
             @RequestHeader(value = "X-USER-ID", required = false) String userId,
             @RequestHeader(value = "X-APIM-CLIENT-ID", required = false) String clientId,

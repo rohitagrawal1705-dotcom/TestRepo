@@ -11,6 +11,12 @@ public class RequestContext {
 
     private String userId;
 
+    private String firstName;
+
+    private String lastName;
+
+    private String email;
+
     private String clientId;
 
     private String product;

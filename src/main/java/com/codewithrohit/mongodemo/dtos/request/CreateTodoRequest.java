@@ -1,13 +1,14 @@
 package com.codewithrohit.mongodemo.dtos.request;
 
-import com.codewithrohit.mongodemo.entity.Priority;
+import com.codewithrohit.mongodemo.model.AssociatedEntities;
+import com.codewithrohit.mongodemo.model.Priority;
+import com.codewithrohit.mongodemo.model.UserInfo;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import lombok.Data;
 
 import java.time.LocalDateTime;
 import java.util.Set;
-
 
 @Data
 public class CreateTodoRequest {
@@ -22,11 +23,11 @@ public class CreateTodoRequest {
 
     private LocalDateTime dueDate;
 
-    private Set<String> assignedToUserIds;
+    private Set<@Valid UserInfo> assignedToUserIds;
 
-    private Set<AssociatedEntitiesRequest> associatedEntities;
+    private Set<@Valid AssociatedEntities> associatedEntities;
 
-    private String initialComment;
+    private String comment;
 
     private ReminderRequest reminder;
 }
